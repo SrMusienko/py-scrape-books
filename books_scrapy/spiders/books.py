@@ -1,3 +1,6 @@
+import os
+import subprocess
+
 import scrapy
 from scrapy.http import Response
 
@@ -38,3 +41,15 @@ class BooksSpider(scrapy.Spider):
             "upc": response.css(".table tr")[0].css("td::text").get()
         }
         yield book_exp
+
+    def close(self, reason):
+        if os.path.exists("books.jl"):
+            subprocess.run(["git", "add", "books.jl"])
+            subprocess.run(
+                [
+                    "git",
+                    "commit",
+                    "-m",
+                    "Update books.jl with latest scraping results"
+                ]
+            )
