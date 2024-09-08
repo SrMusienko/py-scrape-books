@@ -1,5 +1,6 @@
 import os
 import subprocess
+from typing import Generator
 
 import scrapy
 from scrapy.http import Response
@@ -10,7 +11,10 @@ class BooksSpider(scrapy.Spider):
     allowed_domains = ["books.toscrape.com"]
     start_urls = ["http://books.toscrape.com/"]
 
-    def parse(self, response: Response, **kwargs) -> None:
+    def parse(
+            self,
+            response: Response, **kwargs
+    ) -> Generator[scrapy.Request, None, None]:
         for book in response.css(".product_pod"):
             url = book.css("h3 > a::attr(href)").get()
 
@@ -24,7 +28,7 @@ class BooksSpider(scrapy.Spider):
             yield scrapy.Request(next_page, callback=self.parse)
 
     @staticmethod
-    def get_detail_info(self, response: Response) -> None:
+    def get_detail_info(response: Response) -> Generator[dict, None, None]:
         book_exp = {
             "title": response.css(".product_main > h1::text").get(),
             "price": response.css(".price_color::text").get()[1:],
@@ -42,7 +46,7 @@ class BooksSpider(scrapy.Spider):
         }
         yield book_exp
 
-    def close(self, reason):
+    def close(self, reason: str) -> None:
         if os.path.exists("books.jl"):
             subprocess.run(["git", "add", "books.jl"])
             subprocess.run(
